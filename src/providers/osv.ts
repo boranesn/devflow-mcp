@@ -70,7 +70,7 @@ function mapCvssScore(score: number): VulnSeverity {
 
 function extractSeverity(vuln: OsvVuln): VulnSeverity {
   // 1. Try database_specific.severity (GitHub Advisory Database, NVD, etc.)
-  const dbSev = vuln.database_specific?.["severity"];
+  const dbSev = vuln.database_specific?.severity;
   if (typeof dbSev === "string") {
     const mapped = SEVERITY_TEXT_MAP[dbSev.toLowerCase()];
     if (mapped) return mapped;
@@ -86,11 +86,11 @@ function extractSeverity(vuln: OsvVuln): VulnSeverity {
   }
 
   // 3. Try CVSS numeric score from database_specific.cvss
-  const cvssObj = vuln.database_specific?.["cvss"];
+  const cvssObj = vuln.database_specific?.cvss;
   if (cvssObj && typeof cvssObj === "object") {
-    const baseScore = (cvssObj as Record<string, unknown>)["baseScore"];
+    const baseScore = (cvssObj as Record<string, unknown>).baseScore;
     if (typeof baseScore === "number") return mapCvssScore(baseScore);
-    const score = (cvssObj as Record<string, unknown>)["score"];
+    const score = (cvssObj as Record<string, unknown>).score;
     if (typeof score === "number") return mapCvssScore(score);
   }
 

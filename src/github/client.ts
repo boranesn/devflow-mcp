@@ -1,11 +1,11 @@
-import { Octokit } from "@octokit/rest";
 import { throttling } from "@octokit/plugin-throttling";
+import { Octokit } from "@octokit/rest";
 import { GitHubAuthError, RateLimitError } from "../lib/errors.js";
 
 const ThrottledOctokit = Octokit.plugin(throttling);
 
 function createClient(): Octokit {
-  const token = process.env["GITHUB_TOKEN"];
+  const token = process.env.GITHUB_TOKEN;
   if (!token) {
     throw new GitHubAuthError("GITHUB_TOKEN environment variable is not set.");
   }
@@ -13,16 +13,21 @@ function createClient(): Octokit {
   return new ThrottledOctokit({
     auth: token,
     throttle: {
-      onRateLimit: (retryAfter: number, options: Record<string, unknown>, _octokit: unknown, retryCount: number): boolean => {
+      onRateLimit: (
+        retryAfter: number,
+        options: Record<string, unknown>,
+        _octokit: unknown,
+        retryCount: number,
+      ): boolean => {
         console.error(
-          `Rate limit hit for ${String(options["method"])} ${String(options["url"])}. Retry after ${retryAfter}s (attempt ${retryCount + 1})`,
+          `Rate limit hit for ${String(options.method)} ${String(options.url)}. Retry after ${retryAfter}s (attempt ${retryCount + 1})`,
         );
         if (retryCount < 2) return true;
         throw new RateLimitError(retryAfter);
       },
       onSecondaryRateLimit: (retryAfter: number, options: Record<string, unknown>): boolean => {
         console.error(
-          `Secondary rate limit hit for ${String(options["method"])} ${String(options["url"])}. Retry after ${retryAfter}s`,
+          `Secondary rate limit hit for ${String(options.method)} ${String(options.url)}. Retry after ${retryAfter}s`,
         );
         throw new RateLimitError(retryAfter);
       },

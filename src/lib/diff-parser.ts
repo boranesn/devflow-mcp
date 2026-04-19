@@ -22,7 +22,7 @@ export function parseFilePatch(filename: string, patch: string): ParsedFileDiff 
     if (line.startsWith("@@")) {
       if (currentHunk) hunks.push(currentHunk);
       const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
-      const startLine = match ? parseInt(match[1], 10) : 0;
+      const startLine = match ? Number.parseInt(match[1], 10) : 0;
       currentHunk = { header: line, startLine, lines: [] };
     } else if (currentHunk) {
       currentHunk.lines.push(line);

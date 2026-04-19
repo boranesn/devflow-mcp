@@ -44,9 +44,7 @@ export function scoreRisk(input: RiskInput): RiskResult {
 
   const secretsFound = input.files.some((f) =>
     f.hunks.some((h) =>
-      h.lines.some(
-        (line) => line.startsWith("+") && SECRET_PATTERNS.some((p) => p.test(line)),
-      ),
+      h.lines.some((line) => line.startsWith("+") && SECRET_PATTERNS.some((p) => p.test(line))),
     ),
   );
   if (secretsFound) {

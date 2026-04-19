@@ -1,6 +1,6 @@
-import { getOctokit } from "./client.js";
 import { GitHubNotFoundError } from "../lib/errors.js";
 import type { PRData } from "../types/index.js";
+import { getOctokit } from "./client.js";
 
 export async function fetchPR(owner: string, repo: string, prNumber: number): Promise<PRData> {
   const octokit = getOctokit();

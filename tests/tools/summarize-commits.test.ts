@@ -150,6 +150,36 @@ describe("summarizeCommitsHandler", () => {
     expect(opts.since).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
+  it("converts relative since date (1h) to ISO", async () => {
+    mockFetch.mockResolvedValue([]);
+
+    await summarizeCommitsHandler({
+      owner: "myorg",
+      repo: "myrepo",
+      since: "1h",
+      limit: 50,
+      output_style: "digest",
+    });
+
+    const opts = mockFetch.mock.calls[0]![2];
+    expect(opts.since).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("converts relative since date (2m) to ISO", async () => {
+    mockFetch.mockResolvedValue([]);
+
+    await summarizeCommitsHandler({
+      owner: "myorg",
+      repo: "myrepo",
+      since: "2m",
+      limit: 50,
+      output_style: "digest",
+    });
+
+    const opts = mockFetch.mock.calls[0]![2];
+    expect(opts.since).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
   it("passes ISO since date through unchanged", async () => {
     mockFetch.mockResolvedValue([]);
 

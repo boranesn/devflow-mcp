@@ -1,5 +1,5 @@
-import { getOctokit } from "./client.js";
 import { GitHubNotFoundError } from "../lib/errors.js";
+import { getOctokit } from "./client.js";
 
 export async function fetchFileContents(
   owner: string,

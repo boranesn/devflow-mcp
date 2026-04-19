@@ -1,16 +1,13 @@
 import { z } from "zod";
-import { parseCommits } from "../lib/commit-parser.js";
 import { fetchBranchCommits } from "../github/commits.js";
+import { parseCommits } from "../lib/commit-parser.js";
 import type { CommitData } from "../types/index.js";
 
 export const summarizeCommitsSchema = {
   owner: z.string().min(1).describe("GitHub repository owner"),
   repo: z.string().min(1).describe("GitHub repository name"),
   branch: z.string().optional().describe("Branch name (default: repo default branch)"),
-  since: z
-    .string()
-    .optional()
-    .describe('ISO date or relative value like "7d" or "1w"'),
+  since: z.string().optional().describe('ISO date or relative value like "7d" or "1w"'),
   until: z.string().optional().describe("ISO date (default: now)"),
   author: z.string().optional().describe("Filter by GitHub username"),
   limit: z.number().int().min(1).max(200).default(50).describe("Max commits to fetch"),
@@ -46,7 +43,7 @@ function parseRelativeDate(input: string): string {
   const match = input.match(/^(\d+)([hdwm])$/);
   if (!match) return input;
 
-  const amount = parseInt(match[1], 10);
+  const amount = Number.parseInt(match[1], 10);
   const unit = match[2];
   const now = new Date();
 
@@ -138,7 +135,10 @@ export async function summarizeCommitsHandler(
     other: categorized.filter((c) => c.category === "other").map((c) => c.subject),
   };
 
-  const dates = rawCommits.map((c) => c.date).filter(Boolean).sort();
+  const dates = rawCommits
+    .map((c) => c.date)
+    .filter(Boolean)
+    .sort();
 
   return {
     repo: `${args.owner}/${args.repo}`,

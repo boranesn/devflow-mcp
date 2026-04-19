@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { LRUCache } from "../lib/cache.js";
-import { fetchVulnerabilities } from "../providers/osv.js";
 import { fetchFileContents } from "../github/repo.js";
+import { LRUCache } from "../lib/cache.js";
 import { GitHubNotFoundError } from "../lib/errors.js";
-import type { OsvEcosystem, VulnSeverity, OsvPackage } from "../providers/osv.js";
+import { fetchVulnerabilities } from "../providers/osv.js";
+import type { OsvEcosystem, OsvPackage, VulnSeverity } from "../providers/osv.js";
 
 const OSV_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
@@ -69,8 +69,8 @@ function parseNpmDependencies(content: string): OsvPackage[] {
   }
 
   const allDeps: Record<string, unknown> = {
-    ...((pkg["dependencies"] ?? {}) as Record<string, unknown>),
-    ...((pkg["devDependencies"] ?? {}) as Record<string, unknown>),
+    ...((pkg.dependencies ?? {}) as Record<string, unknown>),
+    ...((pkg.devDependencies ?? {}) as Record<string, unknown>),
   };
 
   const packages: OsvPackage[] = [];
@@ -91,10 +91,8 @@ function parsePypiDependencies(content: string): OsvPackage[] {
     const line = raw.trim();
     if (!line || line.startsWith("#") || line.startsWith("-")) continue;
     // Match: package==1.0.0, package>=1.0.0, package~=1.0.0, etc.
-    const match = line.match(
-      /^([a-zA-Z0-9_\-\.]+)\s*(?:==|>=|~=|!=|<=|>|<)\s*([0-9][^,\s;]*)/,
-    );
-    if (match && match[1] && match[2]) {
+    const match = line.match(/^([a-zA-Z0-9_\-\.]+)\s*(?:==|>=|~=|!=|<=|>|<)\s*([0-9][^,\s;]*)/);
+    if (match?.[1] && match[2]) {
       packages.push({ name: match[1], version: match[2] });
     }
   }
@@ -122,9 +120,7 @@ async function detectEcosystem(
     if (!(err instanceof GitHubNotFoundError)) throw err;
   }
 
-  throw new GitHubNotFoundError(
-    "No package.json or requirements.txt found in repository root",
-  );
+  throw new GitHubNotFoundError("No package.json or requirements.txt found in repository root");
 }
 
 async function fetchDependencyFile(
@@ -156,12 +152,7 @@ export async function auditDependenciesHandler(
     fileContent = detected.content;
   } else {
     resolvedEcosystem = args.ecosystem;
-    fileContent = await fetchDependencyFile(
-      args.owner,
-      args.repo,
-      args.ecosystem,
-      args.branch,
-    );
+    fileContent = await fetchDependencyFile(args.owner, args.repo, args.ecosystem, args.branch);
   }
 
   // Parse packages
@@ -174,9 +165,7 @@ export async function auditDependenciesHandler(
   const allVulns = await fetchVulnerabilities(packages, resolvedEcosystem);
 
   // Filter by severity threshold
-  const filtered = allVulns.filter((v) =>
-    meetsThreshold(v.severity, args.severity_threshold),
-  );
+  const filtered = allVulns.filter((v) => meetsThreshold(v.severity, args.severity_threshold));
 
   // Build stats (across all vulns, not just filtered)
   const stats: AuditStats = { critical: 0, high: 0, moderate: 0, low: 0 };
@@ -189,7 +178,8 @@ export async function auditDependenciesHandler(
     total_dependencies: packages.length,
     vulnerabilities: filtered,
     stats,
-    audit_passed: allVulns.filter((v) => meetsThreshold(v.severity, args.severity_threshold)).length === 0,
+    audit_passed:
+      allVulns.filter((v) => meetsThreshold(v.severity, args.severity_threshold)).length === 0,
     osv_query_timestamp: new Date().toISOString(),
   };
 

@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { analyzePrSchema, analyzePrHandler } from "./tools/analyze-pr.js";
-import { generateChangelogSchema, generateChangelogHandler } from "./tools/generate-changelog.js";
-import { summarizeCommitsSchema, summarizeCommitsHandler } from "./tools/summarize-commits.js";
-import { reviewCodeSchema, reviewCodeHandler } from "./tools/review-code.js";
-import { suggestRefactorSchema, suggestRefactorHandler } from "./tools/suggest-refactor.js";
-import { auditDependenciesSchema, auditDependenciesHandler } from "./tools/audit-dependencies.js";
+import { analyzePrHandler, analyzePrSchema } from "./tools/analyze-pr.js";
+import { auditDependenciesHandler, auditDependenciesSchema } from "./tools/audit-dependencies.js";
+import { generateChangelogHandler, generateChangelogSchema } from "./tools/generate-changelog.js";
+import { reviewCodeHandler, reviewCodeSchema } from "./tools/review-code.js";
+import { suggestRefactorHandler, suggestRefactorSchema } from "./tools/suggest-refactor.js";
+import { summarizeCommitsHandler, summarizeCommitsSchema } from "./tools/summarize-commits.js";
 
 export function createServer(): McpServer {
   const server = new McpServer({

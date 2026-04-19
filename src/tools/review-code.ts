@@ -67,7 +67,8 @@ const ISSUE_RULES: IssueRule[] = [
     severity: "high",
     pattern: /\beval\s*\(/,
     description: "eval() executes arbitrary code and is a critical security risk",
-    fix_suggestion: "Replace eval() with JSON.parse() for data, or refactor to eliminate dynamic execution",
+    fix_suggestion:
+      "Replace eval() with JSON.parse() for data, or refactor to eliminate dynamic execution",
   },
   {
     type: "bug",
@@ -84,7 +85,8 @@ const ISSUE_RULES: IssueRule[] = [
     languages: JS_LANGS,
     pattern: /\.innerHTML\s*=/,
     description: "Direct innerHTML assignment can lead to XSS vulnerabilities",
-    fix_suggestion: "Use textContent for plain text, or sanitize input before assigning to innerHTML",
+    fix_suggestion:
+      "Use textContent for plain text, or sanitize input before assigning to innerHTML",
   },
   {
     type: "style",
@@ -147,8 +149,7 @@ const ISSUE_RULES: IssueRule[] = [
     pattern: /\bvar\s+\w/,
     languages: JS_LANGS,
     description: "Use of 'var' instead of 'const' or 'let'",
-    fix_suggestion:
-      "Prefer 'const' for values that don't change and 'let' for variables that do",
+    fix_suggestion: "Prefer 'const' for values that don't change and 'let' for variables that do",
   },
 ];
 
@@ -161,11 +162,7 @@ function isRuleApplicable(rule: IssueRule, lang: string): boolean {
   return rule.languages.includes(lang);
 }
 
-function detectIssues(
-  code: string,
-  language: string,
-  rules?: string[],
-): ReviewIssue[] {
+function detectIssues(code: string, language: string, rules?: string[]): ReviewIssue[] {
   const lang = normalizeLanguage(language);
   const lines = code.split("\n");
   const issues: ReviewIssue[] = [];
@@ -209,8 +206,7 @@ function detectIssues(
       severity: "high",
       line_hint: nestingResult.lineHint,
       description: `Nesting depth of ${nestingResult.depth} exceeds the recommended maximum of 4`,
-      fix_suggestion:
-        "Use early returns / guard clauses to flatten nesting depth",
+      fix_suggestion: "Use early returns / guard clauses to flatten nesting depth",
       example:
         "// Instead of deeply nested ifs, return early:\nif (!condition) return;\n// continue with main logic",
     });
@@ -379,9 +375,7 @@ function buildSummary(
     highCount > 0
       ? `${highCount} high-severity issue${highCount > 1 ? "s" : ""} require immediate attention.`
       : "Issues are minor and low risk.";
-  return (
-    `This ${language} code${ctx} has ${issues.length} issue${issues.length !== 1 ? "s" : ""} across ${[...new Set(issues.map((i) => i.type))].length} categor${categories.includes(",") ? "ies" : "y"} (score: ${score}/10). ${mainConcern}`
-  );
+  return `This ${language} code${ctx} has ${issues.length} issue${issues.length !== 1 ? "s" : ""} across ${[...new Set(issues.map((i) => i.type))].length} categor${categories.includes(",") ? "ies" : "y"} (score: ${score}/10). ${mainConcern}`;
 }
 
 export async function reviewCodeHandler(args: ReviewCodeInput): Promise<ReviewCodeOutput> {

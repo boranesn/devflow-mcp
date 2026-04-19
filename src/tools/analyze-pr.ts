@@ -1,8 +1,8 @@
 import { z } from "zod";
+import { fetchPR } from "../github/pr.js";
 import { LRUCache } from "../lib/cache.js";
 import { parseFilePatch } from "../lib/diff-parser.js";
 import { scoreRisk } from "../lib/risk-scorer.js";
-import { fetchPR } from "../github/pr.js";
 
 const PR_CACHE_TTL = 2 * 60 * 1000;
 
@@ -13,10 +13,7 @@ export const analyzePrSchema = {
   owner: z.string().min(1).describe("GitHub repository owner"),
   repo: z.string().min(1).describe("GitHub repository name"),
   pr_number: z.number().int().positive().describe("Pull request number"),
-  focus: z
-    .array(z.enum(focusValues))
-    .optional()
-    .describe("Areas to focus on (default: all)"),
+  focus: z.array(z.enum(focusValues)).optional().describe("Areas to focus on (default: all)"),
 };
 
 type AnalyzePrInput = z.infer<z.ZodObject<typeof analyzePrSchema>>;
@@ -87,8 +84,7 @@ const FINDING_RULES: FindingRule[] = [
   {
     category: "security",
     severity: "error",
-    pattern:
-      /(?:api[_-]?key|password|secret|token)\s*[:=]\s*['"][a-zA-Z0-9_\-!@#$%^&*]{8,}['"]/i,
+    pattern: /(?:api[_-]?key|password|secret|token)\s*[:=]\s*['"][a-zA-Z0-9_\-!@#$%^&*]{8,}['"]/i,
     message: "Possible hardcoded credential or secret",
     suggestion: "Move secrets to environment variables and use a secrets manager",
   },
@@ -158,7 +154,7 @@ function generateFindings(
     for (const line of lines) {
       if (line.startsWith("@@")) {
         const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
-        if (match) currentLine = parseInt(match[1], 10) - 1;
+        if (match) currentLine = Number.parseInt(match[1], 10) - 1;
         continue;
       }
 
@@ -196,11 +192,7 @@ function buildChangeSummary(
   topFiles: string[],
 ): string {
   const fileList = topFiles.slice(0, 3).join(", ");
-  return (
-    `"${prTitle}" modifies ${filesChanged} file${filesChanged !== 1 ? "s" : ""} ` +
-    `(+${linesAdded} / -${linesRemoved} lines). ` +
-    (topFiles.length > 0 ? `Key files: ${fileList}.` : "")
-  );
+  return `"${prTitle}" modifies ${filesChanged} file${filesChanged !== 1 ? "s" : ""} (+${linesAdded} / -${linesRemoved} lines). ${topFiles.length > 0 ? `Key files: ${fileList}.` : ""}`;
 }
 
 function toMergeRecommendation(

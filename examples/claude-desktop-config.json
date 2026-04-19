@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "devflow": {
+      "command": "npx",
+      "args": ["devflow-mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here"
+      }
+    }
+  }
+}

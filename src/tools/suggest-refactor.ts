@@ -12,10 +12,7 @@ type GoalArea = (typeof goalValues)[number];
 export const suggestRefactorSchema = {
   code: z.string().min(1).describe("Code block to refactor"),
   language: z.string().min(1).describe("Programming language"),
-  goal: z
-    .array(z.enum(goalValues))
-    .optional()
-    .describe("Refactoring goals (default: all)"),
+  goal: z.array(z.enum(goalValues)).optional().describe("Refactoring goals (default: all)"),
   max_suggestions: z.number().int().min(1).max(10).default(3).describe("Max suggestions"),
 };
 
@@ -118,7 +115,8 @@ function findDeepNestingLine(code: string): number {
 function findMagicNumbers(code: string): Array<{ line: number; value: string }> {
   const results: Array<{ line: number; value: string }> = [];
   const lines = code.split("\n");
-  const MAGIC_NUMBER = /(?<![.\w])(?![-]?[01]\b)(-?\d{2,}(?:\.\d+)?)\b(?!\s*[,)}\]]?\s*(?:const|let|var|=))/;
+  const MAGIC_NUMBER =
+    /(?<![.\w])(?![-]?[01]\b)(-?\d{2,}(?:\.\d+)?)\b(?!\s*[,)}\]]?\s*(?:const|let|var|=))/;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i] ?? "";
@@ -150,11 +148,7 @@ function hasMixedConcerns(code: string): boolean {
   return concerns >= 2;
 }
 
-function buildSuggestions(
-  code: string,
-  goals: GoalArea[],
-  language: string,
-): Suggestion[] {
+function buildSuggestions(code: string, goals: GoalArea[], language: string): Suggestion[] {
   const suggestions: Suggestion[] = [];
   const depth = maxBraceDepth(code);
   const lines = countLines(code);
@@ -162,10 +156,7 @@ function buildSuggestions(
   const elseIfCount = countElseIfChain(code);
 
   // 1. Deep nesting → guard clauses
-  if (
-    depth > 3 &&
-    (goals.includes("reduce_complexity") || goals.includes("readability"))
-  ) {
+  if (depth > 3 && (goals.includes("reduce_complexity") || goals.includes("readability"))) {
     const nestLine = findDeepNestingLine(code);
     const before = extractSnippet(code, Math.max(1, nestLine - 3), nestLine + 3);
     suggestions.push({
@@ -174,7 +165,7 @@ function buildSuggestions(
       technique: "Replace Nested Conditional with Guard Clauses",
       before,
       after:
-        `// Invert conditions and return early\nif (!condition1) return;\nif (!condition2) throw new Error(...);\n// Happy path continues here without nesting`,
+        "// Invert conditions and return early\nif (!condition1) return;\nif (!condition2) throw new Error(...);\n// Happy path continues here without nesting",
       effort: "low",
       impact: "high",
     });
@@ -203,7 +194,7 @@ function buildSuggestions(
   // 3. Magic numbers → named constants
   const magicNumbers = findMagicNumbers(code);
   if (magicNumbers.length > 0 && goals.includes("readability")) {
-    const first = magicNumbers[0]!;
+    const first = magicNumbers[0];
     const lineContent = (code.split("\n")[first.line - 1] ?? "").trim();
     suggestions.push({
       title: "Replace magic numbers with named constants",
@@ -223,7 +214,8 @@ function buildSuggestions(
       rationale:
         "Awaiting inside a loop processes items serially. Promise.all processes them concurrently, dramatically reducing total time.",
       technique: "Loop Optimization",
-      before: "for (const item of items) {\n  const result = await process(item);\n  results.push(result);\n}",
+      before:
+        "for (const item of items) {\n  const result = await process(item);\n  results.push(result);\n}",
       after: "const results = await Promise.all(items.map(item => process(item)));",
       effort: "low",
       impact: "high",
@@ -231,9 +223,14 @@ function buildSuggestions(
   }
 
   // 5. Long else-if chain → lookup / strategy
-  if (elseIfCount >= 3 && (goals.includes("reduce_complexity") || goals.includes("solid_principles"))) {
+  if (
+    elseIfCount >= 3 &&
+    (goals.includes("reduce_complexity") || goals.includes("solid_principles"))
+  ) {
     const chainMatch = /if\s*\([^)]+\)[\s\S]{0,300}(?:else\s+if[\s\S]{0,300}){2}/.exec(code);
-    const before = chainMatch ? chainMatch[0].slice(0, 200) : "if (...) { ... } else if (...) { ... } else if (...) { ... }";
+    const before = chainMatch
+      ? chainMatch[0].slice(0, 200)
+      : "if (...) { ... } else if (...) { ... } else if (...) { ... }";
     suggestions.push({
       title: "Replace if/else chain with a lookup map or strategy pattern",
       rationale: `A chain of ${elseIfCount + 1} branches is hard to extend and read. A lookup table scales better and is open for extension without modification.`,
@@ -253,7 +250,8 @@ function buildSuggestions(
       rationale:
         "Hardcoded dependencies make the function impossible to unit test in isolation. Injecting them allows swapping in fakes/mocks during tests.",
       technique: "Dependency Injection",
-      before: "function processOrder(id: string) {\n  const db = new OrderRepository();\n  return db.findById(id);\n}",
+      before:
+        "function processOrder(id: string) {\n  const db = new OrderRepository();\n  return db.findById(id);\n}",
       after:
         "function processOrder(id: string, db: OrderRepository) {\n  return db.findById(id);\n}\n// Or use constructor injection in a class",
       effort: "medium",
@@ -305,7 +303,8 @@ function buildSuggestions(
       rationale:
         "Functions with side effects (global mutation, I/O) are hard to test. Separating pure computation from side effects makes each part independently testable.",
       technique: "Extract Pure Function",
-      before: "function compute(input: string) {\n  globalCache[input] = expensiveOp(input);\n  return globalCache[input];\n}",
+      before:
+        "function compute(input: string) {\n  globalCache[input] = expensiveOp(input);\n  return globalCache[input];\n}",
       after:
         "// Pure — easy to test\nfunction compute(input: string): Result {\n  return expensiveOp(input);\n}\n\n// Side effect isolated\nfunction computeAndCache(input: string, cache: Map<string, Result>): Result {\n  const result = compute(input);\n  cache.set(input, result);\n  return result;\n}",
       effort: "medium",

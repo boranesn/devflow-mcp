@@ -1,6 +1,6 @@
-import { getOctokit } from "./client.js";
 import { GitHubNotFoundError } from "../lib/errors.js";
 import type { CommitData } from "../types/index.js";
+import { getOctokit } from "./client.js";
 
 type OctokitCommit = {
   sha: string;

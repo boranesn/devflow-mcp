@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { LRUCache } from "../lib/cache.js";
-import { parseCommits, categorizeCommit } from "../lib/commit-parser.js";
 import { fetchCommitsBetweenRefs } from "../github/commits.js";
+import { LRUCache } from "../lib/cache.js";
+import { categorizeCommit, parseCommits } from "../lib/commit-parser.js";
 
 const COMMIT_CACHE_TTL = 5 * 60 * 1000;
 
@@ -60,22 +60,22 @@ function buildMarkdownChangelog(
 
     switch (commit.category) {
       case "features":
-        groups["Features"]?.push(line);
+        groups.Features?.push(line);
         break;
       case "fixes":
         groups["Bug Fixes"]?.push(line);
         break;
       case "refactors":
-        groups["Refactors"]?.push(line);
+        groups.Refactors?.push(line);
         break;
       case "docs":
-        groups["Documentation"]?.push(line);
+        groups.Documentation?.push(line);
         break;
       case "chores":
-        groups["Chores"]?.push(line);
+        groups.Chores?.push(line);
         break;
       default:
-        groups["Other"]?.push(line);
+        groups.Other?.push(line);
     }
   }
 
@@ -105,9 +105,7 @@ function buildJsonChangelog(
   return JSON.stringify(grouped, null, 2);
 }
 
-function buildAuthorGroupedMarkdown(
-  commits: ReturnType<typeof parseCommits>,
-): string {
+function buildAuthorGroupedMarkdown(commits: ReturnType<typeof parseCommits>): string {
   const byAuthor = new Map<string, string[]>();
 
   for (const commit of commits) {
@@ -121,9 +119,7 @@ function buildAuthorGroupedMarkdown(
     .join("\n\n");
 }
 
-function buildDateGroupedMarkdown(
-  commits: ReturnType<typeof parseCommits>,
-): string {
+function buildDateGroupedMarkdown(commits: ReturnType<typeof parseCommits>): string {
   const byDate = new Map<string, string[]>();
 
   for (const commit of commits) {

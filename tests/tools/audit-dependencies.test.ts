@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from "vitest
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 import { auditDependenciesHandler } from "../../src/tools/audit-dependencies.js";
+import { GitHubNotFoundError } from "../../src/lib/errors.js";
 
 vi.mock("../../src/github/repo.js", () => ({
   fetchFileContents: vi.fn(),
@@ -350,5 +351,107 @@ describe("auditDependenciesHandler", () => {
       ecosystem: "npm",
       severity_threshold: "low",
     });
+  });
+
+  it("auto-detects pypi when package.json is absent but requirements.txt exists", async () => {
+    mockFetch.mockImplementation((_owner, _repo, path) => {
+      if (path === "requirements.txt") return Promise.resolve(REQUIREMENTS_TXT);
+      return Promise.reject(new GitHubNotFoundError(`${String(path)} not found`));
+    });
+    mswServer.use(
+      http.post("https://api.osv.dev/v1/querybatch", () =>
+        HttpResponse.json({
+          results: [{ vulns: [] }, { vulns: [] }, { vulns: [] }, { vulns: [] }],
+        }),
+      ),
+    );
+
+    const result = await auditDependenciesHandler({
+      owner: "org11",
+      repo: "repo11",
+      ecosystem: "auto",
+      severity_threshold: "low",
+    });
+
+    expect(result.ecosystem).toBe("pypi");
+  });
+
+  it("uses ecosystem_specific severity when database_specific is absent", async () => {
+    mockFetch.mockResolvedValue(PACKAGE_JSON);
+    mswServer.use(
+      http.post("https://api.osv.dev/v1/querybatch", () =>
+        HttpResponse.json({
+          results: [
+            {
+              vulns: [
+                {
+                  id: "GHSA-xxxx-eco-xxxx",
+                  summary: "Vuln without db-specific severity",
+                  aliases: [],
+                  affected: [
+                    {
+                      ecosystem_specific: { severity: "HIGH" },
+                      ranges: [
+                        { type: "SEMVER", events: [{ introduced: "0" }, { fixed: "5.0.0" }] },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            { vulns: [] },
+            { vulns: [] },
+            { vulns: [] },
+          ],
+        }),
+      ),
+    );
+
+    const result = await auditDependenciesHandler({
+      owner: "org12",
+      repo: "repo12",
+      ecosystem: "npm",
+      severity_threshold: "low",
+    });
+
+    const vuln = result.vulnerabilities[0];
+    expect(vuln).toBeDefined();
+    expect(vuln?.severity).toBe("high");
+  });
+
+  it("uses CVSS baseScore when text severity fields are absent", async () => {
+    mockFetch.mockResolvedValue(PACKAGE_JSON);
+    mswServer.use(
+      http.post("https://api.osv.dev/v1/querybatch", () =>
+        HttpResponse.json({
+          results: [
+            {
+              vulns: [
+                {
+                  id: "GHSA-xxxx-cvss-xxxx",
+                  summary: "Vuln with CVSS score only",
+                  aliases: [],
+                  database_specific: { cvss: { baseScore: 9.5 } },
+                  affected: [],
+                },
+              ],
+            },
+            { vulns: [] },
+            { vulns: [] },
+            { vulns: [] },
+          ],
+        }),
+      ),
+    );
+
+    const result = await auditDependenciesHandler({
+      owner: "org13",
+      repo: "repo13",
+      ecosystem: "npm",
+      severity_threshold: "low",
+    });
+
+    const vuln = result.vulnerabilities[0];
+    expect(vuln?.severity).toBe("critical");
   });
 });
