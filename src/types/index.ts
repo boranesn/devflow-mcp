@@ -2,7 +2,7 @@ export interface PRFile {
   filename: string;
   additions: number;
   deletions: number;
-  patch: string | undefined;
+  patch?: string;
   status: string;
 }
 

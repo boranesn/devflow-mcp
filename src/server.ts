@@ -2,6 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { analyzePrSchema, analyzePrHandler } from "./tools/analyze-pr.js";
 import { generateChangelogSchema, generateChangelogHandler } from "./tools/generate-changelog.js";
 import { summarizeCommitsSchema, summarizeCommitsHandler } from "./tools/summarize-commits.js";
+import { reviewCodeSchema, reviewCodeHandler } from "./tools/review-code.js";
+import { suggestRefactorSchema, suggestRefactorHandler } from "./tools/suggest-refactor.js";
 
 export function createServer(): McpServer {
   const server = new McpServer({
@@ -36,6 +38,26 @@ export function createServer(): McpServer {
     async (args) => ({
       content: [
         { type: "text", text: JSON.stringify(await summarizeCommitsHandler(args), null, 2) },
+      ],
+    }),
+  );
+
+  server.tool(
+    "review_code",
+    "Accept a raw code snippet and return structured feedback: issues, complexity, best practice violations, and improvement suggestions.",
+    reviewCodeSchema,
+    async (args) => ({
+      content: [{ type: "text", text: JSON.stringify(await reviewCodeHandler(args), null, 2) }],
+    }),
+  );
+
+  server.tool(
+    "suggest_refactor",
+    "Given a code block, suggest concrete refactoring strategies with before/after examples.",
+    suggestRefactorSchema,
+    async (args) => ({
+      content: [
+        { type: "text", text: JSON.stringify(await suggestRefactorHandler(args), null, 2) },
       ],
     }),
   );

@@ -144,7 +144,7 @@ const FINDING_RULES: FindingRule[] = [
 ];
 
 function generateFindings(
-  files: Array<{ filename: string; patch: string | undefined }>,
+  files: Array<{ filename: string; patch?: string }>,
   focus: FocusArea[],
 ): Finding[] {
   const findings: Finding[] = [];

@@ -30,8 +30,8 @@ export async function fetchPR(owner: string, repo: string, prNumber: number): Pr
         filename: f.filename,
         additions: f.additions,
         deletions: f.deletions,
-        patch: f.patch as string | undefined,
-        status: f.status as string,
+        patch: f.patch,
+        status: f.status,
       })),
     };
   } catch (err: unknown) {
