@@ -4,6 +4,7 @@ import { generateChangelogSchema, generateChangelogHandler } from "./tools/gener
 import { summarizeCommitsSchema, summarizeCommitsHandler } from "./tools/summarize-commits.js";
 import { reviewCodeSchema, reviewCodeHandler } from "./tools/review-code.js";
 import { suggestRefactorSchema, suggestRefactorHandler } from "./tools/suggest-refactor.js";
+import { auditDependenciesSchema, auditDependenciesHandler } from "./tools/audit-dependencies.js";
 
 export function createServer(): McpServer {
   const server = new McpServer({
@@ -58,6 +59,17 @@ export function createServer(): McpServer {
     async (args) => ({
       content: [
         { type: "text", text: JSON.stringify(await suggestRefactorHandler(args), null, 2) },
+      ],
+    }),
+  );
+
+  server.tool(
+    "audit_dependencies",
+    "Read package.json or requirements.txt from a GitHub repo and audit dependencies for known vulnerabilities using the OSV database.",
+    auditDependenciesSchema,
+    async (args) => ({
+      content: [
+        { type: "text", text: JSON.stringify(await auditDependenciesHandler(args), null, 2) },
       ],
     }),
   );
